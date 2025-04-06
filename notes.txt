@@ -1,0 +1,32 @@
+
+
+## START Of My Prompt
+
+**Prompt Template:**
+
+"Please analyze and summarize this [indicator name] post from [platform, e.g., TradingView]. I'd like you to cover the following aspects:
+
+1. **Indicator Functionality:**  
+   - Explain how the indicator works, including its main components (e.g., moving averages, oscillators, filters) and the signals it generates.  
+   - Describe the various filters or settings available and how they interact to produce trade signals.
+
+2. **Usage Guidelines and Hints:**  
+   - Summarize any recommended settings, time frames, or trading strategies mentioned by the creator.  
+   - Note any tips or suggestions provided for different trading styles (e.g., scalping, swing trading, binary options).
+
+3. **User Feedback Analysis:**  
+   - Identify and list the positive comments that highlight the indicator’s strengths and successful applications.  
+   - Identify and list the negative comments that point out issues, limitations, or concerns (e.g., scaling issues, repainting, signal inconsistencies).
+
+4. **Additional Insights:**  
+   - Provide extra value by analyzing potential customization options, adaptability to various markets, and any workaround suggestions mentioned by users.  
+   - Discuss how the indicator's design and functionality could contribute to profitable trading when used in combination with other tools or strategies.
+
+5. **Rating System:**  
+   - **Profitability (Scale 1-10):** Based on user feedback and any performance reports, rate how profitable the indicator appears to be.  
+   - **Reliability (Scale 1-10):** Rate the consistency and dependability of the indicator based on user experiences, focusing on issues like signal consistency and any repainting or scaling issues.
+
+Please ensure that the analysis is comprehensive, clearly categorized, and includes a brief summary of both how the indicator works and the overall sentiment from user feedback, along with the defined ratings for profitability and reliability."
+
+---
+## END Of My Prompt
