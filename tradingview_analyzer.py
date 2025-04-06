@@ -4,12 +4,21 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 import csv
+import os
+from config import settings
 
 class TradingViewScraper:
-    def __init__(self, db_path="indicators.db"):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        # Use the provided db_path or default to the one in settings
+        self.db_path = db_path or os.path.join(settings.DATA_DIR, "indicators.db")
         self.setup_database()
-    
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     def setup_database(self):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -35,12 +44,12 @@ class TradingViewScraper:
         try:
             response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.text, 'html.parser')
-            
+
             # Extract relevant data
             name = soup.find('h1', {'class': 'title'}).text.strip()
             description = soup.find('div', {'class': 'description'}).text.strip()
             comments = soup.find_all('div', {'class': 'comment'})
-            
+
             # Compile data for analysis
             data = {
                 'name': name,
@@ -83,8 +92,8 @@ class TradingViewScraper:
     def save_to_db(self, analysis):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO indicators 
-                (url, name, functionality, usage_guidelines, user_feedback, 
+                INSERT OR REPLACE INTO indicators
+                (url, name, functionality, usage_guidelines, user_feedback,
                 additional_insights, profitability_rating, reliability_rating, analyzed_date)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
@@ -93,6 +102,12 @@ class TradingViewScraper:
                 analysis['additional_insights'], analysis['profitability_rating'],
                 analysis['reliability_rating'], analysis['analyzed_date']
             ))
+
+    def get_all_indicators_df(self):
+        with sqlite3.connect(self.db_path) as conn:
+            query = "SELECT * FROM indicators"
+            df = pd.read_sql_query(query, conn)
+            return df
 
 def main():
     scraper = TradingViewScraper()

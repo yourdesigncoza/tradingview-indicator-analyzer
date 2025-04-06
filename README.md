@@ -24,6 +24,29 @@ pip install -r requirements.txt
 4. Set up environment variables:
    - Copy `.env.example` to `.env`
    - Fill in your credentials and configuration
+   - **Important**: You must provide a valid OpenAI API key in the `.env` file. Get your API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+
+   The application uses `python-dotenv` to load environment variables from the `.env` file. The following variables are supported:
+
+   ```
+   # Required
+   OPENAI_API_KEY=your_openai_api_key_here
+
+   # Optional
+   ENVIRONMENT=development  # or production
+   REQUESTS_PER_MINUTE=20   # Rate limiting for API calls
+
+   # TradingView credentials (optional)
+   TRADINGVIEW_USERNAME=your_username_here
+   TRADINGVIEW_PASSWORD=your_password_here
+
+   # Database configuration (optional)
+   DB_NAME=your_db_name
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_HOST=localhost
+   DB_PORT=5432
+   ```
 
 5. Run the application:
 ```bash
