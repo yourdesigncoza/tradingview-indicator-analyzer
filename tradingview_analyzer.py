@@ -38,26 +38,79 @@ class TradingViewScraper:
             """)
 
     def scrape_indicator(self, url):
+        # More realistic headers to avoid being blocked
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Referer': 'https://www.tradingview.com/',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'Cache-Control': 'max-age=0'
         }
+
+        # Add a random delay to avoid rate limiting (between 1 and 3 seconds)
+        import random
+        import time
+        delay = random.uniform(1, 3)
+        time.sleep(delay)
+
         try:
-            response = requests.get(url, headers=headers)
+            # Make the request
+            response = requests.get(url, headers=headers, timeout=10)
+
+            # Check if the request was successful
+            if response.status_code != 200:
+                print(f"Error scraping {url}: HTTP status code {response.status_code}")
+                return None
+
+            # Parse the HTML
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Extract relevant data
-            name = soup.find('h1', {'class': 'title'}).text.strip()
-            description = soup.find('div', {'class': 'description'}).text.strip()
-            comments = soup.find_all('div', {'class': 'comment'})
+            # Extract relevant data with better error handling
+            try:
+                name_element = soup.find('h1', {'class': 'title'})
+                name = name_element.text.strip() if name_element else "Unknown Indicator"
+            except Exception as e:
+                print(f"Error extracting name from {url}: {str(e)}")
+                name = "Unknown Indicator"
+
+            try:
+                description_element = soup.find('div', {'class': 'description'})
+                description = description_element.text.strip() if description_element else "No description available"
+            except Exception as e:
+                print(f"Error extracting description from {url}: {str(e)}")
+                description = "No description available"
+
+            try:
+                comments = soup.find_all('div', {'class': 'comment'})
+                comment_texts = [c.text.strip() for c in comments] if comments else []
+            except Exception as e:
+                print(f"Error extracting comments from {url}: {str(e)}")
+                comment_texts = []
 
             # Compile data for analysis
             data = {
                 'name': name,
                 'description': description,
-                'comments': [c.text.strip() for c in comments],
+                'comments': comment_texts,
                 'url': url
             }
+
+            print(f"Successfully scraped: {name}")
             return data
+
+        except requests.exceptions.Timeout:
+            print(f"Timeout error scraping {url}")
+            return None
+        except requests.exceptions.ConnectionError:
+            print(f"Connection error scraping {url}")
+            return None
         except Exception as e:
             print(f"Error scraping {url}: {str(e)}")
             return None
@@ -72,6 +125,37 @@ class TradingViewScraper:
                 if data:
                     analysis = self.analyze_indicator(data)
                     self.save_to_db(analysis)
+
+    def add_url_to_csv(self, url, csv_path='tradingview_urls.csv'):
+        """Add a new URL to the CSV file if it doesn't already exist"""
+        # Check if the URL is valid
+        if not url.startswith('https://www.tradingview.com/script/'):
+            return False, "URL must be a TradingView script URL (https://www.tradingview.com/script/...)"
+
+        # Check if the file exists
+        if not os.path.exists(csv_path):
+            # Create the file with a header
+            with open(csv_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['url'])
+
+        # Check if the URL already exists in the file
+        existing_urls = []
+        with open(csv_path, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+            for row in reader:
+                existing_urls.append(row[0])
+
+        if url in existing_urls:
+            return False, "This URL already exists in the list"
+
+        # Add the URL to the file
+        with open(csv_path, 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([url])
+
+        return True, "URL added successfully"
 
     def analyze_indicator(self, data):
         # Here you would implement the analysis based on your prompt template
@@ -108,6 +192,23 @@ class TradingViewScraper:
             query = "SELECT * FROM indicators"
             df = pd.read_sql_query(query, conn)
             return df
+
+    def export_to_csv(self, output_path="indicators_export.csv"):
+        """Export all indicators to a CSV file"""
+        try:
+            df = self.get_all_indicators_df()
+            if df.empty:
+                return False, "No indicators to export"
+
+            # Format the date column
+            if 'analyzed_date' in df.columns:
+                df['analyzed_date'] = pd.to_datetime(df['analyzed_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
+
+            # Export to CSV
+            df.to_csv(output_path, index=False)
+            return True, f"Successfully exported {len(df)} indicators to {output_path}"
+        except Exception as e:
+            return False, f"Error exporting indicators: {str(e)}"
 
 def main():
     scraper = TradingViewScraper()

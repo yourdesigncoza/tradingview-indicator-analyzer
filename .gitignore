@@ -37,3 +37,9 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+.qodo
+
+# Database
+*.db
+data/
+indicators_export.csv
